@@ -1,0 +1,6 @@
+[submodule "vcpkg"]
+	path = vcpkg
+	url = https://github.com/microsoft/vcpkg.git
+[submodule "faiss"]
+	path = faiss
+	url = https://github.com/facebookresearch/faiss.git
