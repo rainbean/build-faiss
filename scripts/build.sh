@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# export PATH="$PATH:/usr/local/cuda/bin"
-# export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/lib64
-
 # abort on any error
 set -e
 
@@ -33,4 +30,5 @@ make -C build -j4 faiss
 make -C build -j4 demo_ivfpq_indexing
 echo "::endgroup::"
 
-
+ls -lah build/faiss/libfaiss.a
+ls -lah build/demos/demo_ivfpq_indexing

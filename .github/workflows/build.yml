@@ -1,0 +1,37 @@
+name: Build
+
+# trigger on tags
+on:
+  push:
+    tags:
+      - "*"
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-20.04
+            triplet: x64-linux
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Add MSBuild to PATH
+        if: contains(matrix.os, 'windows')
+        uses: microsoft/setup-msbuild@v1.1
+
+      - name: Free disk space
+        if: contains(matrix.os, 'ubuntu')
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+
+      - name: Build Linux artifact
+        if: contains(matrix.os, 'ubuntu')
+        working-directory: ${{ github.workspace }}
+        run: scripts/build.sh
