@@ -1,7 +1,6 @@
 
 # Set path
 $env:Path += ";C:\Program Files\CMake\bin\;C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\MSBuild\Current\Bin\;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\bin"
-$env:Path += "$PWD\vcpkg\installed\x64-windows\bin"
 
 # install required 3rd party libraries
 if (!(Test-Path .\vcpkg\installed\x64-windows-static)) {
@@ -16,25 +15,38 @@ if (!(Test-Path .\vcpkg\installed\x64-windows-static)) {
     Write-Output "::endgroup::"
 }
 
-# fix demo app build error in Windows
-cp demo_ivfpq_indexing.cpp .\faiss\demos\
+# define MKL path
+$MKL_PATH = "$PWD\vcpkg\installed\x64-windows-static\lib\intel64\"
+$MKL_LIBRARIES = "${MKL_PATH}/mkl_intel_lp64.lib;${MKL_PATH}/mkl_intel_thread.lib;${MKL_PATH}/mkl_core.lib;${MKL_PATH}/libiomp5md.lib"
+$DIST_PATH = "$PWD\dist"
 
 # configure build and compile
 Write-Output "::group::Configure CMake and Build ..."
-$MKL_PATH = "$PWD\vcpkg\installed\x64-windows-static\lib\intel64\"
 
 cmake -Bbuild `
     -G "Visual Studio 16 2019" -A "x64" `
     -Wno-dev `
+    -DCMAKE_INSTALL_PREFIX="${DIST_PATH}" `
     -DFAISS_ENABLE_PYTHON=OFF `
     -DFAISS_OPT_LEVEL=avx2 `
     -DFAISS_ENABLE_GPU=OFF `
     -DBLA_VENDOR=Intel10_64lp `
-    -DMKL_LIBRARIES="${MKL_PATH}/mkl_intel_lp64.lib;${MKL_PATH}/mkl_intel_thread.lib;${MKL_PATH}/mkl_core.lib;${MKL_PATH}/libiomp5md.lib" `
+    -DMKL_LIBRARIES="${MKL_LIBRARIES}" `
     faiss
-MSBuild build\faiss.sln /t:faiss /t:demo_ivfpq_indexing /p:Configuration=Release 
+
+MSBuild build\faiss.sln /t:faiss /p:Configuration=Release
 Write-Output "::endgroup::"
 
 dir .\vcpkg\installed\x64-windows-static\bin\libiomp5md.dll
 dir .\build\faiss\Release\faiss.lib
 dir .\build\demos\Release\demo_ivfpq_indexing.exe
+
+Write-Output "::group::Pack artifacts ..."
+# pack binary
+# 7z a -m0=bcj -m1=zstd build\$TARGET `
+#     .\build\Release\*.exe `
+#     .\build\Release\*.dll `
+#     .\OpenCV\x64\vc16\bin\*.dll `
+#     .\libtorch\lib\*.dll `
+# | Out-Null
+Write-Output "::endgroup::"

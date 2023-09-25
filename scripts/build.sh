@@ -12,6 +12,7 @@ then
     echo "::endgroup::"
 fi
 
+# define MKL path
 MKL_PATH=$PWD/vcpkg/installed/x64-linux/lib/intel64
 MKL_LIBRARIES="-Wl,--start-group;${MKL_PATH}/libmkl_intel_lp64.a;${MKL_PATH}/libmkl_gnu_thread.a;${MKL_PATH}/libmkl_core.a;-Wl,--end-group -ldl"
 DIST_PATH=dist
