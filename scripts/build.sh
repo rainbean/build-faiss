@@ -12,7 +12,8 @@ then
     echo "::endgroup::"
 fi
 
-export MKL_PATH=$PWD/vcpkg/installed/x64-linux/lib/intel64
+MKL_PATH=$PWD/vcpkg/installed/x64-linux/lib/intel64
+MKL_LIBRARIES="-Wl,--start-group;${MKL_PATH}/libmkl_intel_lp64.a;${MKL_PATH}/libmkl_gnu_thread.a;${MKL_PATH}/libmkl_core.a;-Wl,--end-group -ldl"
 
 # configure build and compile
 echo "::group::Configure CMake and Build ..."
@@ -23,7 +24,7 @@ cmake -Bbuild \
     -DFAISS_OPT_LEVEL=avx2 \
     -DFAISS_ENABLE_GPU=OFF \
     -DBLA_VENDOR=Intel10_64lp \
-    "-DMKL_LIBRARIES=-Wl,--start-group;${MKL_PATH}/libmkl_intel_lp64.a;${MKL_PATH}/libmkl_gnu_thread.a;${MKL_PATH}/libmkl_core.a;-Wl,--end-group -ldl" \
+    -DMKL_LIBRARIES="${MKL_LIBRARIES}" \
     faiss
 
 make -C build -j4 faiss
