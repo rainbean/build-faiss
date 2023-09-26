@@ -26,6 +26,7 @@ cmake -Bbuild \
     -DFAISS_ENABLE_PYTHON=OFF \
     -DFAISS_OPT_LEVEL=avx2 \
     -DFAISS_ENABLE_GPU=OFF \
+    -DBUILD_TESTING=OFF \
     -DBLA_VENDOR=Intel10_64lp \
     -DMKL_LIBRARIES="${MKL_LIBRARIES}" \
     faiss
@@ -37,6 +38,8 @@ echo "::endgroup::"
 cp $MKL_PATH/libmkl_intel_lp64.a $DIST_PATH/lib
 cp $MKL_PATH/libmkl_gnu_thread.a $DIST_PATH/lib
 cp $MKL_PATH/libmkl_core.a $DIST_PATH/lib
+rm $DIST_PATH/lib/libfaiss.a
+ln $DIST_PATH/lib/libfaiss_avx2.a $DIST_PATH/lib/libfaiss.a
 
 # remap absolute path to relative dist path
 sed -i "s@$MKL_PATH@\${_IMPORT_PREFIX}/lib@g" $DIST_PATH/share/faiss/faiss-targets.cmake
