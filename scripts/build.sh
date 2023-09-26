@@ -37,6 +37,8 @@ echo "::endgroup::"
 cp $MKL_PATH/libmkl_intel_lp64.a $DIST_PATH/lib
 cp $MKL_PATH/libmkl_gnu_thread.a $DIST_PATH/lib
 cp $MKL_PATH/libmkl_core.a $DIST_PATH/lib
+
+# remap absolute path to relative dist path
 sed -i "s@$MKL_PATH@\${_IMPORT_PREFIX}/lib@g" $DIST_PATH/share/faiss/faiss-targets.cmake
 
 # pack binary
