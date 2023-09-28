@@ -23,7 +23,12 @@ $DIST_PATH = "$PWD\dist"
 
 # configure build and compile
 Write-Output "::group::Configure CMake and Build ..."
-rm -r build,dist
+if (Test-Path build) {
+    rm -r build
+}
+if (Test-Path dist) {
+    rm -r dist
+}
 cmake -Bbuild `
     -G "Visual Studio 16 2019" -A "x64" `
     -Wno-dev `
