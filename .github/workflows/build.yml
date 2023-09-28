@@ -41,12 +41,12 @@ jobs:
       - name: Build Linux artifact
         if: contains(matrix.os, 'ubuntu')
         working-directory: ${{ github.workspace }}
-        run: scripts/build.sh
+        run: scripts/build.sh ${{ matrix.artifact }}
 
       - name: Build Windows artifact
         if: contains(matrix.os, 'windows')
         working-directory: ${{ github.workspace }}
-        run: scripts/build.ps1
+        run: scripts/build.ps1 ${{ matrix.artifact }}
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1-node16
