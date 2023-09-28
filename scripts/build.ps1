@@ -27,7 +27,7 @@ if (Test-Path build) {
     rm -r build
 }
 if (Test-Path dist) {
-    rm -r dist
+    rm -r $DIST_PATH
 }
 cmake -Bbuild `
     -G "Visual Studio 16 2019" -A "x64" `
@@ -50,7 +50,7 @@ cp $MKL_PATH\mkl_intel_thread.lib $DIST_PATH\lib
 cp $MKL_PATH\mkl_core.lib $DIST_PATH\lib
 cp $MKL_PATH\libiomp5md.lib $DIST_PATH\lib
 cp $MKL_PATH\libiomp5md.lib $DIST_PATH\lib
-mkdir -p $DIST_PATH\bin
+New-Item -Path $DIST_PATH\bin -ItemType Directory | Out-Null
 cp $MKL_PATH\..\..\bin\libiomp5md.dll $DIST_PATH\bin
 
 # remap absolute path to relative dist path
@@ -63,8 +63,13 @@ $FAISS_CMAKE = "$DIST_PATH\share\faiss\faiss-targets.cmake"
 # pack binary
 
 Write-Output "::group::Pack artifacts ..."
+
+### install 7zip ZSTD plugin
+Write-Output "Install 7Z-ZSTD plugin ..."
+choco install -y 7zip-zstd | Out-Null
 # pack binary
 Push-Location $DIST_PATH
 7z a -m0=bcj -m1=zstd ..\$TARGET * | Out-Null
 Pop-Location
+
 Write-Output "::endgroup::"
