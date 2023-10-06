@@ -31,7 +31,7 @@ cmake -Bbuild \
     -DMKL_LIBRARIES="${MKL_LIBRARIES}" \
     faiss
 
-make -C build -j4 install
+cmake --build build -j 4 -t install
 echo "::endgroup::"
 
 # copy artifacts and change config
