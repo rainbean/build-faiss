@@ -1,6 +1,23 @@
 # param must be in the begin of PowerShell Script
 param ($TARGET = "faiss-win64.7z")
 
+# Set path
+$env:Path += "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\bin;" +
+
+# install 7zip ZSTD plugin
+if (!(choco list --lo --r -e 7zip-zstd)) {
+    Write-Output "::group::Install 7Z-ZSTD plugin ..."
+    choco install -y 7zip-zstd | Out-Null
+    Write-Output "::endgroup::"
+}
+
+# test if cuda installed
+if (!(Get-Command nvcc -errorAction SilentlyContinue)) {
+    Write-Output "::group::Install CUDA 11 ..."
+    choco install -y cuda --version=11.8.0.52206 | Out-Null
+    Write-Output "::endgroup::"
+}
+
 # install required 3rd party libraries
 if (!(Test-Path .\vcpkg\installed\x64-windows-static)) {
     # refer to https://github.com/facebookresearch/faiss/issues/2641
@@ -34,16 +51,15 @@ cmake -Bbuild `
     -Wno-dev `
     -DCMAKE_INSTALL_PREFIX="${DIST_PATH}" `
     -DFAISS_ENABLE_PYTHON=OFF `
-    -DFAISS_ENABLE_GPU=OFF `
+    -DFAISS_ENABLE_GPU=ON `
     -DBLA_VENDOR=Intel10_64lp `
     -DBUILD_TESTING=OFF `
     -DMKL_LIBRARIES="${MKL_LIBRARIES}" `
     faiss
-
 cmake --build build --config Release --target install
-
 Write-Output "::endgroup::"
 
+Write-Output "::group::Pack artifacts ..."
 # copy artifacts and change config
 cp $MKL_PATH\mkl_intel_lp64.lib $DIST_PATH\lib
 cp $MKL_PATH\mkl_intel_thread.lib $DIST_PATH\lib
@@ -61,15 +77,7 @@ $FAISS_CMAKE = "$DIST_PATH\share\faiss\faiss-targets.cmake"
 } | Set-Content $FAISS_CMAKE
 
 # pack binary
-
-Write-Output "::group::Pack artifacts ..."
-
-### install 7zip ZSTD plugin
-Write-Output "Install 7Z-ZSTD plugin ..."
-choco install -y 7zip-zstd | Out-Null
-# pack binary
 Push-Location $DIST_PATH
 7z a -m0=bcj -m1=zstd ..\$TARGET * | Out-Null
 Pop-Location
-
 Write-Output "::endgroup::"
