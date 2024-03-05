@@ -14,7 +14,7 @@ fi
 
 # define MKL path
 MKL_PATH=$PWD/vcpkg/installed/x64-linux/lib/intel64
-MKL_LIBRARIES="-Wl,--start-group;${MKL_PATH}/libmkl_intel_lp64.a;${MKL_PATH}/libmkl_intel_thread.a;${MKL_PATH}/libmkl_core.a;-Wl,--end-group -liomp5 -ldl -L${MKL_PATH}"
+MKL_LIBRARIES="-Wl,--start-group;${MKL_PATH}/libmkl_intel_lp64.a;${MKL_PATH}/libmkl_gnu_thread.a;${MKL_PATH}/libmkl_core.a;-Wl,--end-group -lpthread -ldl"
 DIST_PATH=dist
 
 # configure build and compile
@@ -25,7 +25,7 @@ cmake -Bbuild \
     -DCMAKE_INSTALL_PREFIX="${DIST_PATH}" \
     -DCMAKE_IGNORE_PREFIX_PATH="$HOME/mamba" \
     -DFAISS_ENABLE_PYTHON=OFF \
-    -DFAISS_OPT_LEVEL=avx2 \
+    -DFAISS_OPT_LEVEL=avx512 \
     -DFAISS_ENABLE_GPU=OFF \
     -DBUILD_TESTING=OFF \
     -DBLA_VENDOR=Intel10_64lp \
@@ -37,9 +37,8 @@ echo "::endgroup::"
 
 # copy artifacts and change config
 cp $MKL_PATH/libmkl_intel_lp64.a $DIST_PATH/lib
-cp $MKL_PATH/libmkl_intel_thread.a $DIST_PATH/lib
+cp $MKL_PATH/libmkl_gnu_thread.a $DIST_PATH/lib
 cp $MKL_PATH/libmkl_core.a $DIST_PATH/lib
-cp $MKL_PATH/libiomp5.so $DIST_PATH/lib
 
 # remap absolute path to relative dist path
 sed -i "s@$MKL_PATH@\${_IMPORT_PREFIX}/lib@g" $DIST_PATH/share/faiss/faiss-targets.cmake
