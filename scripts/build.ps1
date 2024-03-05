@@ -37,7 +37,7 @@ if (Test-Path dist) {
     rm -r $DIST_PATH
 }
 cmake -Bbuild `
-    -G "Visual Studio 16 2019" -A "x64" `
+    -G "Visual Studio 17 2022" -A "x64" `
     -Wno-dev `
     -DCMAKE_INSTALL_PREFIX="${DIST_PATH}" `
     -DFAISS_ENABLE_PYTHON=OFF `
@@ -58,8 +58,7 @@ cp $MKL_PATH\mkl_intel_lp64.lib $DIST_PATH\lib
 cp $MKL_PATH\mkl_intel_thread.lib $DIST_PATH\lib
 cp $MKL_PATH\mkl_core.lib $DIST_PATH\lib
 cp $MKL_PATH\libiomp5md.lib $DIST_PATH\lib
-New-Item -Path $DIST_PATH\bin -ItemType Directory | Out-Null
-cp $MKL_PATH\..\..\bin\libiomp5md.dll $DIST_PATH\bin
+cp $MKL_PATH\..\..\bin\libiomp5md.dll $DIST_PATH\lib
 
 # remap absolute path to relative dist path
 $DOUBLE_QUOTE_PATH =  $MKL_PATH.Replace('\', '\\')
