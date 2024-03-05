@@ -2,7 +2,7 @@
 param ($TARGET = "faiss-win64.7z")
 
 # Set path
-$env:Path += "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\bin;" +
+$env:Path += ";C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\bin"
 
 # install 7zip ZSTD plugin
 if (!(choco list --lo --r -e 7zip-zstd)) {
