@@ -2,7 +2,8 @@
 param ($TARGET = "faiss-win64.7z")
 
 # Set path
-$env:Path += ";C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\bin"
+$CUDA_ROOT = "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8"
+$env:Path += ";${CUDA_ROOT}\bin"
 
 # install 7zip ZSTD plugin
 if (!(choco list --lo --r -e 7zip-zstd)) {
@@ -52,10 +53,11 @@ cmake -Bbuild `
     -Wno-dev `
     -DCMAKE_INSTALL_PREFIX="${DIST_PATH}" `
     -DFAISS_ENABLE_PYTHON=OFF `
-    -DFAISS_ENABLE_GPU=ON `
-    -DBLA_VENDOR=Intel10_64lp `
     -DBUILD_TESTING=OFF `
     -DMKL_LIBRARIES="${MKL_LIBRARIES}" `
+    -DBLA_VENDOR=Intel10_64lp `
+    -DCMAKE_GENERATOR_TOOLSET="cuda=${CUDA_ROOT}" `
+    -DFAISS_ENABLE_GPU=ON `
     faiss
 cmake --build build --config Release --target install
 Write-Output "::endgroup::"
