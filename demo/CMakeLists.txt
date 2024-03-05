@@ -6,6 +6,7 @@ project(demo LANGUAGES CXX)
 list(APPEND CMAKE_PREFIX_PATH "${PROJECT_SOURCE_DIR}/../dist")
 find_package(faiss REQUIRED)
 find_package(OpenMP REQUIRED)
+find_package(CUDAToolkit REQUIRED)
 
 set(CMAKE_CXX_STANDARD 11)
 
