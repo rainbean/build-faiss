@@ -21,7 +21,7 @@ jobs:
           - os: ubuntu-20.04
             artifact: faiss-linux-${{ github.ref_name }}.tar.zst
             command: build.sh
-          - os: windows-2022
+          - os: windows-2019
             artifact: faiss-win64-${{ github.ref_name }}.7z
             command: build.ps1
 
@@ -32,7 +32,7 @@ jobs:
 
       - name: Add MSBuild to PATH
         if: contains(matrix.os, 'windows')
-        uses: microsoft/setup-msbuild@v2
+        uses: microsoft/setup-msbuild@v1.1
 
       - name: Free disk space
         if: contains(matrix.os, 'ubuntu')

@@ -3,20 +3,6 @@
 # abort on any error
 set -e
 
-export PATH="$PATH:/usr/local/cuda/bin"
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/lib64
-
-# test if cuda installed
-if ! command -v nvcc &> /dev/null
-then
-    echo "::group::Install CUDA, sudo permission required ..."
-    wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb -O /tmp/cuda.deb
-    sudo dpkg -i /tmp/cuda.deb
-    sudo apt-get update
-    sudo apt-get install -y cuda-toolkit-11-8
-    echo "::endgroup::"
-fi
-
 # install required 3rd party libraries
 if [ ! -d "./vcpkg/installed/x64-linux/lib" ]
 then
@@ -37,10 +23,9 @@ rm -fr build dist
 cmake -Bbuild \
     -Wno-dev \
     -DCMAKE_INSTALL_PREFIX="${DIST_PATH}" \
-    -DCMAKE_IGNORE_PREFIX_PATH="$HOME/mamba" \
     -DFAISS_ENABLE_PYTHON=OFF \
     -DFAISS_OPT_LEVEL=avx2 \
-    -DFAISS_ENABLE_GPU=ON \
+    -DFAISS_ENABLE_GPU=OFF \
     -DBUILD_TESTING=OFF \
     -DBLA_VENDOR=Intel10_64lp \
     -DMKL_LIBRARIES="${MKL_LIBRARIES}" \
