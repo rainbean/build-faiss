@@ -1,6 +1,13 @@
 # param must be in the begin of PowerShell Script
 param ($TARGET = "faiss-win64.7z")
 
+# install 7zip ZSTD plugin
+if (!(choco list --lo --r -e 7zip-zstd)) {
+    Write-Output "::group::Install 7Z-ZSTD plugin ..."
+    choco install -y 7zip-zstd | Out-Null
+    Write-Output "::endgroup::"
+}
+
 # install required 3rd party libraries
 if (!(Test-Path .\vcpkg\installed\x64-windows-static)) {
     # refer to https://github.com/facebookresearch/faiss/issues/2641
@@ -44,11 +51,12 @@ cmake --build build --config Release --target install
 
 Write-Output "::endgroup::"
 
+Write-Output "::group::Pack artifacts ..."
+
 # copy artifacts and change config
 cp $MKL_PATH\mkl_intel_lp64.lib $DIST_PATH\lib
 cp $MKL_PATH\mkl_intel_thread.lib $DIST_PATH\lib
 cp $MKL_PATH\mkl_core.lib $DIST_PATH\lib
-cp $MKL_PATH\libiomp5md.lib $DIST_PATH\lib
 cp $MKL_PATH\libiomp5md.lib $DIST_PATH\lib
 New-Item -Path $DIST_PATH\bin -ItemType Directory | Out-Null
 cp $MKL_PATH\..\..\bin\libiomp5md.dll $DIST_PATH\bin
@@ -60,13 +68,6 @@ $FAISS_CMAKE = "$DIST_PATH\share\faiss\faiss-targets.cmake"
     $_.Replace("$DOUBLE_QUOTE_PATH", '${_IMPORT_PREFIX}\\lib')
 } | Set-Content $FAISS_CMAKE
 
-# pack binary
-
-Write-Output "::group::Pack artifacts ..."
-
-### install 7zip ZSTD plugin
-Write-Output "Install 7Z-ZSTD plugin ..."
-choco install -y 7zip-zstd | Out-Null
 # pack binary
 Push-Location $DIST_PATH
 7z a -m0=bcj -m1=zstd ..\$TARGET * | Out-Null

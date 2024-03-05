@@ -23,6 +23,7 @@ rm -fr build dist
 cmake -Bbuild \
     -Wno-dev \
     -DCMAKE_INSTALL_PREFIX="${DIST_PATH}" \
+    -DCMAKE_IGNORE_PREFIX_PATH="$HOME/mamba" \
     -DFAISS_ENABLE_PYTHON=OFF \
     -DFAISS_OPT_LEVEL=avx2 \
     -DFAISS_ENABLE_GPU=OFF \
