@@ -47,7 +47,8 @@ if (Test-Path dist) {
     rm -r $DIST_PATH
 }
 cmake -Bbuild `
-    -G "Visual Studio 16 2019" -A "x64" `
+    -G "Visual Studio 17 2022" `
+    -A "x64" `
     -Wno-dev `
     -DCMAKE_INSTALL_PREFIX="${DIST_PATH}" `
     -DFAISS_ENABLE_PYTHON=OFF `
