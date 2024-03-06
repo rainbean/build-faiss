@@ -41,6 +41,7 @@ cmake -Bbuild `
     -Wno-dev `
     -DCMAKE_INSTALL_PREFIX="${DIST_PATH}" `
     -DFAISS_ENABLE_PYTHON=OFF `
+    -DFAISS_OPT_LEVEL=avx512 `
     -DFAISS_ENABLE_GPU=OFF `
     -DBLA_VENDOR=Intel10_64lp `
     -DBUILD_TESTING=OFF `
