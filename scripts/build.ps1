@@ -41,11 +41,11 @@ cmake -Bbuild `
     -Wno-dev `
     -DCMAKE_INSTALL_PREFIX="${DIST_PATH}" `
     -DFAISS_ENABLE_PYTHON=OFF `
-    -DFAISS_OPT_LEVEL=avx512 `
     -DFAISS_ENABLE_GPU=OFF `
-    -DBLA_VENDOR=Intel10_64lp `
     -DBUILD_TESTING=OFF `
+    -DBLA_VENDOR=Intel10_64lp `
     -DMKL_LIBRARIES="${MKL_LIBRARIES}" `
+    -DBUILD_SHARED_LIBS=ON `
     faiss
 
 cmake --build build --config Release --target install
@@ -55,11 +55,7 @@ Write-Output "::endgroup::"
 Write-Output "::group::Pack artifacts ..."
 
 # copy artifacts and change config
-cp $MKL_PATH\mkl_intel_lp64.lib $DIST_PATH\lib
-cp $MKL_PATH\mkl_intel_thread.lib $DIST_PATH\lib
-cp $MKL_PATH\mkl_core.lib $DIST_PATH\lib
-cp $MKL_PATH\libiomp5md.lib $DIST_PATH\lib
-cp $MKL_PATH\..\..\bin\libiomp5md.dll $DIST_PATH\lib
+cp $MKL_PATH\..\..\bin\libiomp5md.dll $DIST_PATH\bin
 
 # remap absolute path to relative dist path
 $DOUBLE_QUOTE_PATH =  $MKL_PATH.Replace('\', '\\')
