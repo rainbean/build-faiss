@@ -7,7 +7,6 @@ set -e
 echo "::group::Configure CMake and Build ..."
 rm -fr build-demo
 cmake -Bbuild-demo -Wno-dev demo
-
-make -C build-demo -j4 demo
+cmake --build build-demo -j 4 -t demo
 echo "::endgroup::"
 

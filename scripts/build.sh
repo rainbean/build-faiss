@@ -15,7 +15,6 @@ fi
 # define MKL path
 MKL_PATH=$PWD/vcpkg/installed/x64-linux/lib/intel64
 MKL_LIBRARIES="-Wl,--start-group;${MKL_PATH}/libmkl_intel_lp64.a;${MKL_PATH}/libmkl_gnu_thread.a;${MKL_PATH}/libmkl_core.a;-Wl,--end-group"
-# MKL_LIBRARIES="-Wl,--start-group;${MKL_PATH}/libmkl_intel_lp64.a;${MKL_PATH}/libmkl_intel_thread.a;${MKL_PATH}/libmkl_core.a;${MKL_PATH}/libiomp5.so;-Wl,--end-group"
 DIST_PATH=dist
 
 # configure build and compile
@@ -41,7 +40,8 @@ echo "::endgroup::"
 cp $MKL_PATH/libmkl_intel_lp64.a $DIST_PATH/lib
 cp $MKL_PATH/libmkl_gnu_thread.a $DIST_PATH/lib
 cp $MKL_PATH/libmkl_core.a $DIST_PATH/lib
-# cp $MKL_PATH/libiomp5.so $DIST_PATH/lib
+# enforce link with avx512 lib
+cp $DIST_PATH/lib/libfaiss_avx512.a $DIST_PATH/lib/libfaiss.a
 
 # remap absolute path to relative dist path
 sed -i "s@$MKL_PATH@\${_IMPORT_PREFIX}/lib@g" $DIST_PATH/share/faiss/faiss-targets.cmake
