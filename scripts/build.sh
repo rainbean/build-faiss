@@ -31,17 +31,16 @@ cmake -Bbuild \
     -DBUILD_TESTING=OFF \
     -DBLA_VENDOR=Intel10_64lp \
     -DMKL_LIBRARIES="${MKL_LIBRARIES}" \
+    -DBUILD_SHARED_LIBS=ON \
     faiss
 
 cmake --build build -j 4 -t install
 echo "::endgroup::"
 
 # copy artifacts and change config
-cp $MKL_PATH/libmkl_intel_lp64.a $DIST_PATH/lib
-cp $MKL_PATH/libmkl_gnu_thread.a $DIST_PATH/lib
-cp $MKL_PATH/libmkl_core.a $DIST_PATH/lib
-# enforce link with avx512 lib
-cp $DIST_PATH/lib/libfaiss_avx512.a $DIST_PATH/lib/libfaiss.a
+rm $DIST_PATH/lib/libfaiss.so $DIST_PATH/lib/libfaiss_avx2.so
+(cd $DIST_PATH/lib/; ln -s libfaiss_avx512.so libfaiss.so)
+(cd $DIST_PATH/lib/; ln -s libfaiss_avx512.so libfaiss_avx2.so)
 
 # remap absolute path to relative dist path
 sed -i "s@$MKL_PATH@\${_IMPORT_PREFIX}/lib@g" $DIST_PATH/share/faiss/faiss-targets.cmake
