@@ -26,7 +26,6 @@ cmake -Bbuild \
     -DCMAKE_INSTALL_PREFIX="${DIST_PATH}" \
     -DCMAKE_IGNORE_PREFIX_PATH="$HOME/mamba" \
     -DFAISS_ENABLE_PYTHON=OFF \
-    -DFAISS_OPT_LEVEL=avx512 \
     -DFAISS_ENABLE_GPU=OFF \
     -DBUILD_TESTING=OFF \
     -DBLA_VENDOR=Intel10_64lp \
@@ -38,9 +37,9 @@ cmake --build build -j 4 -t install
 echo "::endgroup::"
 
 # copy artifacts and change config
-rm $DIST_PATH/lib/libfaiss.so $DIST_PATH/lib/libfaiss_avx2.so
-(cd $DIST_PATH/lib/; ln -s libfaiss_avx512.so libfaiss.so)
-(cd $DIST_PATH/lib/; ln -s libfaiss_avx512.so libfaiss_avx2.so)
+#rm $DIST_PATH/lib/libfaiss.so $DIST_PATH/lib/libfaiss_avx2.so
+#(cd $DIST_PATH/lib/; ln -s libfaiss_avx512.so libfaiss.so)
+#(cd $DIST_PATH/lib/; ln -s libfaiss_avx512.so libfaiss_avx2.so)
 
 # remap absolute path to relative dist path
 sed -i "s@$MKL_PATH@\${_IMPORT_PREFIX}/lib@g" $DIST_PATH/share/faiss/faiss-targets.cmake
