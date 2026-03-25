@@ -6,5 +6,6 @@
         "**/build-demo": true,
         "**/data": true,
         "**/dist": true,
+        "**/*.tar.zst": true,
     },
 }
