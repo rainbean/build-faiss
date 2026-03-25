@@ -1,0 +1,10 @@
+# ignore pre-built libraries
+
+# ignore Git submodules
+vcpkg/
+
+# prevents Claude from reading the secret file
+.envrc
+.env
+.env.*
+
