@@ -1,0 +1,29 @@
+FROM --platform=linux/arm64 ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y \
+    cmake \
+    ninja-build \
+    build-essential \
+    curl \
+    zip \
+    unzip \
+    tar \
+    zstd \
+    git \
+    pkg-config \
+    python3 \
+    libopenblas-dev \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /workspace
+
+# Copy source — submodules must already be initialized on the host
+# (run: git submodule update --init --recursive before docker build)
+COPY . .
+
+RUN chmod +x scripts/build-arm64.sh
+
+RUN ./scripts/build-arm64.sh faiss-linux-arm64.tar.zst
