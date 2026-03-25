@@ -6,6 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This repository builds and packages [FAISS](https://github.com/facebookresearch/faiss) (Facebook AI Similarity Search) as distributable binaries for Linux and Windows. The FAISS source and vcpkg package manager are git submodules. Builds link against Intel MKL (via vcpkg) for optimized BLAS performance.
 
+## Setup
+
+Fresh clone requires submodules:
+```bash
+git clone --recurse-submodules <repo>
+# or after cloning: git submodule update --init --recursive
+```
+
 ## Key Commands
 
 ### Build (Linux)
@@ -15,18 +23,24 @@ This repository builds and packages [FAISS](https://github.com/facebookresearch/
 # Output artifact unpacks to: dist/
 ```
 
+vcpkg installs intel-mkl only on first run (skipped if `vcpkg/installed/x64-linux/lib` exists). Re-running the build script after the first time skips the vcpkg step.
+
 ### Build (Windows)
 ```powershell
 .\scripts\build.ps1 [optional_output_filename]
 # Produces: faiss-win64.7z
+# Requires: Chocolatey (for 7zip-zstd), MSBuild / Visual Studio 2022
 ```
+
+The Windows script patches `vcpkg/ports/intel-mkl/portfile.cmake` in-place before first install (replaces `ilp64`→`lp64`, `sequential`→`intel_thread`). This modifies a tracked file in the `vcpkg` submodule.
 
 ### Build and Run Demo
 ```bash
-./scripts/build.sh && ./scripts/demo.sh && time ./build-demo/demo
+# dist/ must exist (run build.sh first)
+./scripts/demo.sh && time ./build-demo/demo
 ```
 
-The demo compiles `demo/demo_ivfpq_indexing.cpp` against the built `dist/` artifacts and runs an IVFPQ indexing benchmark on random 128D vectors.
+The demo compiles `demo/demo_ivfpq_indexing.cpp` against the built `dist/` artifacts and runs an IVFPQ indexing benchmark on random 128D vectors. It also requires OpenMP at link time.
 
 ## Architecture
 
@@ -48,11 +62,11 @@ The demo compiles `demo/demo_ivfpq_indexing.cpp` against the built `dist/` artif
 `demo/CMakeLists.txt` finds the FAISS package from `../dist` and links against it. The demo (`demo_ivfpq_indexing.cpp`) validates the build by training an IVFPQ index, inserting vectors, and querying nearest neighbors.
 
 ### CI/CD
-`.github/workflows/build.yml` triggers on git tag pushes, builds on Ubuntu 22.04 and Windows 2022, and uploads artifacts to AWS S3.
+`.github/workflows/build.yml` triggers on any git tag push, builds on Ubuntu 22.04 and Windows 2022, and uploads artifacts to AWS S3 (ap-northeast-1). Artifact filenames include the tag name: `faiss-linux-{tag}.tar.zst` and `faiss-win64-{tag}.7z`. Uses OIDC for AWS auth (requires `id-token: write` permission).
 
 ## Important Notes
 
 - AVX512 is **disabled** by default (for generic CPU compatibility); see commit `ef7c228`
 - The Windows build patches the intel-mkl vcpkg port to use `lp64` and `intel_thread` instead of `ilp64`/`sequential`
-- `faiss/` and `vcpkg/` are excluded from Claude's context via `.claudeignore`
+- Only `vcpkg/` is excluded from Claude's context via `.claudeignore` — `faiss/` is not excluded (but is a read-only submodule)
 - `dist/` and `build/` directories are generated artifacts — do not commit them
