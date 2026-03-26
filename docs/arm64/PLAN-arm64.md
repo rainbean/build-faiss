@@ -75,10 +75,10 @@ docker run --platform linux/arm64 --rm -it \
 
 ### Verification checklist
 
-- [ ] `faiss-linux-arm64.tar.zst` produced without build errors
-- [ ] `file dist/lib/libfaiss.so` confirms `ARM aarch64`
-- [ ] Demo compiles and links against the built `dist/`
-- [ ] IVFPQ benchmark runs to completion and prints recall / QPS
+- [x] `faiss-linux-arm64.tar.zst` produced without build errors
+- [x] `file dist/lib/libfaiss.so` confirms `ARM aarch64`
+- [x] Demo compiles and links against the built `dist/`
+- [x] IVFPQ benchmark runs to completion and prints recall / QPS
 
 ---
 

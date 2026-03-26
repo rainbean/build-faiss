@@ -1,9 +1,9 @@
-FROM --platform=linux/arm64 ubuntu:22.04
+# FROM --platform=linux/arm64 ubuntu:22.04
+FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y \
-    cmake \
     ninja-build \
     build-essential \
     curl \
@@ -17,6 +17,10 @@ RUN apt-get update && apt-get install -y \
     libopenblas-dev \
     libgomp1 \
     && rm -rf /var/lib/apt/lists/*
+
+# Install CMake 3.28.6 from pre-built binary (apt on Ubuntu 22.04 only ships 3.22.x, FAISS requires >=3.23.1)
+RUN curl -fsSL https://cmake.org/files/v3.28/cmake-3.28.6-linux-aarch64.tar.gz \
+    | tar -xz --strip-components=1 -C /usr/local
 
 WORKDIR /workspace
 
