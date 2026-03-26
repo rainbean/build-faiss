@@ -118,9 +118,9 @@ Full job considerations:
 
 ### Verification checklist
 
-- [ ] Push a test tag; both `faiss-linux-{tag}.tar.zst` (x64) and `faiss-linux-arm64-{tag}.tar.zst` appear in S3
-- [ ] ARM64 CI job wall-clock time is acceptable (target: under 60 min)
-- [ ] No regressions in x64 or Windows jobs
+- [x] Push a test tag; both `faiss-linux-{tag}.tar.zst` (x64) and `faiss-linux-arm64-{tag}.tar.zst` appear in S3
+- [x] ARM64 CI job wall-clock time is acceptable (target: under 60 min)
+- [x] No regressions in x64 or Windows jobs
 
 ---
 
