@@ -22,11 +22,24 @@ cmake -Bbuild \
 cmake --build build -j "$(nproc)" -t install
 echo "::endgroup::"
 
-# bundle OpenBLAS so the artifact is self-contained at runtime
+# bundle OpenBLAS and its Fortran runtime so the artifact is self-contained
 echo "::group::Bundle OpenBLAS ..."
-OPENBLAS_LIB=$(ldconfig -p | awk '/libopenblas\.so\.0 /{print $NF}' | head -1)
-OPENBLAS_DIR=$(dirname "$OPENBLAS_LIB")
-cp "$OPENBLAS_DIR"/libopenblas.so* "$DIST_PATH/lib/"
+
+# Resolve the real file (not symlinks) and copy it, then recreate symlinks cleanly
+OPENBLAS_REAL=$(readlink -f "$(ldconfig -p | awk '/libopenblas\.so\.0 /{print $NF}' | head -1)")
+OPENBLAS_DIR=$(dirname "$OPENBLAS_REAL")
+OPENBLAS_FILE=$(basename "$OPENBLAS_REAL")
+cp "$OPENBLAS_REAL" "$DIST_PATH/lib/"
+ln -sf "$OPENBLAS_FILE" "$DIST_PATH/lib/libopenblas.so.0"
+ln -sf "$OPENBLAS_FILE" "$DIST_PATH/lib/libopenblas.so"
+
+# libgfortran is a runtime dependency of OpenBLAS (Fortran LAPACK routines)
+GFORTRAN_REAL=$(readlink -f "$(ldconfig -p | awk '/libgfortran\.so\.5 /{print $NF}' | head -1)")
+GFORTRAN_FILE=$(basename "$GFORTRAN_REAL")
+cp "$GFORTRAN_REAL" "$DIST_PATH/lib/"
+ln -sf "$GFORTRAN_FILE" "$DIST_PATH/lib/libgfortran.so.5"
+
+# rewrite cmake targets to use relative install path
 sed -i "s@${OPENBLAS_DIR}@\${_IMPORT_PREFIX}/lib@g" "$DIST_PATH/share/faiss/faiss-targets.cmake"
 echo "::endgroup::"
 
