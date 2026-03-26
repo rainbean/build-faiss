@@ -2,9 +2,9 @@
 param ($TARGET = "faiss-win64.7z")
 
 # install 7zip ZSTD plugin
-if (!(choco list --lo --r -e 7zip-zstd)) {
+if (!(Get-Command 7z -errorAction SilentlyContinue)) {
     Write-Output "::group::Install 7Z-ZSTD plugin ..."
-    choco install -y 7zip-zstd | Out-Null
+    winget install 7zip-zstd | Out-Null
     Write-Output "::endgroup::"
 }
 
