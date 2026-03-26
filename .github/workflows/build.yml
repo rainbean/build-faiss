@@ -35,7 +35,7 @@ jobs:
 
       - name: Add MSBuild to PATH
         if: contains(matrix.os, 'windows')
-        uses: microsoft/setup-msbuild@v2
+        uses: microsoft/setup-msbuild@v3
 
       - name: Free disk space
         if: contains(matrix.os, 'ubuntu')
