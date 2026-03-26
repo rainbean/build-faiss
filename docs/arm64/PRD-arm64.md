@@ -34,12 +34,16 @@ Intel MKL is x86-only. Two viable replacements for ARM64:
 
 #### Recommendation
 
-| Use case | BLAS choice | Reason |
-|---|---|---|
-| Local dev / CI build | **OpenBLAS** | Zero friction, vcpkg-managed, portable |
-| Production artifact for DGX Spark | **ArmPL** | Pre-installed on target, uses SVE, best perf |
+**OpenBLAS only.**
 
-The two-track approach — OpenBLAS for dev/CI portability, ArmPL for the DGX Spark release artifact — is the practical path. Implement OpenBLAS first to validate the build pipeline, then layer in ArmPL for the production artifact.
+ArmPL was evaluated on DGX Spark but ruled out for distribution:
+
+- **No static linking path**: ArmPL's `.a` files are not compiled with `-fPIC` and cannot be linked into a shared `.so`. Dynamic linking is the only option.
+- **200 MB runtime overhead**: `libarmpl_lp64.so` is ~200 MB. Bundling it in the artifact is impractical; requiring it on every target machine adds a heavy deployment dependency.
+- **License incompatibility**: The ArmPL EULA requires downstream recipients to be contractually bound to its terms, which conflicts with MIT-licensed redistribution of FAISS.
+- **Benchmark result**: ArmPL showed ~5× faster training dataset build vs OpenBLAS in the IVFPQ benchmark, but the deployment cost was judged not worth the performance gain for this use case.
+
+OpenBLAS is the single BLAS backend for the ARM64 artifact. It is self-contained (bundled in the tarball), portable across any aarch64 Linux, and delivers adequate performance for the target workloads.
 
 ### vcpkg ARM64 Triplet
 
@@ -174,7 +178,7 @@ ArmPL on DGX Spark   █████████░  90–110%  ← competitive,
 OpenBLAS on ARM64    ███░░░░░░░  25–40%   ← dev/CI only, not production
 ```
 
-**Conclusion**: OpenBLAS is adequate for validating correctness locally. It should not be used to judge production performance. The production artifact must link ArmPL to be a meaningful alternative to the existing MKL build.
+**Conclusion**: ArmPL delivered ~5× faster IVFPQ training on DGX Spark vs OpenBLAS, confirming the SVE advantage. However, the 200 MB dynamic-only runtime dependency was judged to outweigh the performance benefit for this distribution use case. OpenBLAS is the chosen backend. Users who require maximum throughput on Neoverse V2 can build from source against ArmPL directly.
 
 ---
 
@@ -186,4 +190,4 @@ OpenBLAS on ARM64    ███░░░░░░░  25–40%   ← dev/CI only,
 | ArmPL path varies across DGX Spark OS versions | Accept `ARMPL_DIR` env var override in build script |
 | GitHub ARM64 runner availability / cost | QEMU fallback on `ubuntu-22.04` for CI if needed |
 | FAISS NEON path not enabled by default | Verify `FAISS_OPT_LEVEL` flag; set to `generic` initially |
-| ArmPL license requires registration | OpenBLAS build is the default; ArmPL build is opt-in |
+| OpenBLAS performance gap vs ArmPL | Accepted — ArmPL ruled out due to 200 MB deployment cost and no static linking path |

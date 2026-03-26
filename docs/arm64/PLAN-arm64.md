@@ -82,38 +82,15 @@ docker run --platform linux/arm64 --rm -it \
 
 ---
 
-## Stage 2: ArmPL Build (DGX Spark Production Artifact)
+## Stage 2: ArmPL Build — Dropped
 
-Goal: produce a second artifact `faiss-linux-arm64-armpl.tar.zst` linked against ArmPL for production use on DGX Spark.
+ArmPL was evaluated on DGX Spark and showed ~5× faster IVFPQ training vs OpenBLAS. However it was ruled out as the distribution artifact for three reasons:
 
-### New file to create
+1. `libarmpl_lp64.so` is ~200 MB with no viable static linking path (not compiled with `-fPIC`)
+2. Bundling is impractical; requiring it on targets adds a heavy deployment dependency
+3. The ArmPL EULA is incompatible with MIT-licensed redistribution
 
-| File | Purpose |
-|---|---|
-| `scripts/build-arm64-armpl.sh` | ARM64 build script — ArmPL variant |
-
-### `scripts/build-arm64-armpl.sh`
-
-ArmPL is pre-installed on DGX Spark. The build script locates it via an environment variable with a sensible default:
-
-```bash
-ARMPL_DIR="${ARMPL_DIR:-/opt/arm/armpl_latest}"
-
-cmake ... \
-  -DBLA_VENDOR=Arm \
-  -DBLAS_LIBRARIES="${ARMPL_DIR}/lib/libarmpl.so" \
-  -DLAPACK_LIBRARIES="${ARMPL_DIR}/lib/libarmpl.so" \
-  -DBLAS_INCLUDE_DIRS="${ARMPL_DIR}/include" \
-  ...
-```
-
-This script is intended to run natively on DGX Spark or on a CI runner with ArmPL installed.
-
-### Verification checklist
-
-- [x] Build completes on DGX Spark natively
-- [x] `ldd dist/lib/libfaiss.so` shows `libarmpl.so` in the link chain
-- [x] Demo runs; compare QPS / latency vs OpenBLAS build from Stage 1 (about 5x slower on building training dataset)
+**Decision**: OpenBLAS is the single BLAS backend for the ARM64 artifact. See PRD-arm64.md for the full rationale.
 
 ---
 
@@ -139,17 +116,6 @@ Full job considerations:
 - S3 artifact: `faiss-linux-arm64-{tag}.tar.zst` in same bucket (`ap-northeast-1`)
 - If `ubuntu-22.04-arm` runner is unavailable, fallback: `ubuntu-22.04` with `docker buildx --platform linux/arm64`
 
-### Future: ArmPL CI job
-
-Once ArmPL integration is validated in Stage 2, install ArmPL on the runner from the Arm Linux repository:
-
-```bash
-# On ubuntu-22.04-arm runner
-curl -L https://developer.arm.com/-/cdn-downloads/permalink/Arm-Performance-Libraries/Version_24.10/arm-performance-libraries_24.10_deb_gcc.sh | bash
-```
-
-Then run `build-arm64-armpl.sh` as a separate matrix entry producing `faiss-linux-arm64-armpl-{tag}.tar.zst`.
-
 ### Verification checklist
 
 - [ ] Push a test tag; both `faiss-linux-{tag}.tar.zst` (x64) and `faiss-linux-arm64-{tag}.tar.zst` appear in S3
@@ -166,7 +132,6 @@ Then run `build-arm64-armpl.sh` as a separate matrix entry producing `faiss-linu
 |---|---|
 | `scripts/build-arm64.sh` | 1 |
 | `Dockerfile.arm64` | 1 |
-| `scripts/build-arm64-armpl.sh` | 2 |
 
 ### Modify
 
