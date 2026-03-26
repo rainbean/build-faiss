@@ -22,6 +22,14 @@ cmake -Bbuild \
 cmake --build build -j "$(nproc)" -t install
 echo "::endgroup::"
 
+# bundle OpenBLAS so the artifact is self-contained at runtime
+echo "::group::Bundle OpenBLAS ..."
+OPENBLAS_LIB=$(ldconfig -p | awk '/libopenblas\.so\.0 /{print $NF}' | head -1)
+OPENBLAS_DIR=$(dirname "$OPENBLAS_LIB")
+cp "$OPENBLAS_DIR"/libopenblas.so* "$DIST_PATH/lib/"
+sed -i "s@${OPENBLAS_DIR}@\${_IMPORT_PREFIX}/lib@g" "$DIST_PATH/share/faiss/faiss-targets.cmake"
+echo "::endgroup::"
+
 # pack binary
 echo "::group::Pack artifacts ..."
 TARGET=${1:-'faiss-linux-arm64.tar.zst'}
