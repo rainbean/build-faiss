@@ -111,9 +111,9 @@ This script is intended to run natively on DGX Spark or on a CI runner with ArmP
 
 ### Verification checklist
 
-- [ ] Build completes on DGX Spark natively
-- [ ] `ldd dist/lib/libfaiss.so` shows `libarmpl.so` in the link chain
-- [ ] Demo runs; compare QPS / latency vs OpenBLAS build from Stage 1
+- [x] Build completes on DGX Spark natively
+- [x] `ldd dist/lib/libfaiss.so` shows `libarmpl.so` in the link chain
+- [x] Demo runs; compare QPS / latency vs OpenBLAS build from Stage 1 (about 5x slower on building training dataset)
 
 ---
 
