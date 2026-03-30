@@ -3,8 +3,9 @@ param ($TARGET = "faiss-win64.7z")
 
 # install 7zip ZSTD plugin
 if (!(Get-Command 7z -errorAction SilentlyContinue)) {
-    Write-Output "::group::Install 7Z-ZSTD plugin ..."
-    winget install 7zip-zstd | Out-Null
+    Write-Output "::group::Install 7-Zip ..."
+    winget install --id 7zip-zstd -e --silent
+    $env:PATH += ";C:\Program Files\7-Zip-Zstandard"
     Write-Output "::endgroup::"
 }
 
@@ -14,7 +15,7 @@ if (!(Test-Path .\vcpkg\installed\x64-windows-static)) {
     # replace MKL interface to LP
     $MKL_CMAKE = ".\vcpkg\ports\intel-mkl\portfile.cmake"
     (Get-content $MKL_CMAKE) | Foreach-Object {
-        $_ -replace "ilp64", "lp64" -replace "sequential", "intel_thread" 
+        $_ -replace "ilp64", "lp64" -replace "sequential", "intel_thread"
     } | Set-Content $MKL_CMAKE
 
     Write-Output "::group::Install vcpkg libraries ..."
@@ -58,7 +59,7 @@ Write-Output "::group::Pack artifacts ..."
 cp $MKL_PATH\..\..\bin\libiomp5md.dll $DIST_PATH\bin
 
 # remap absolute path to relative dist path
-$DOUBLE_QUOTE_PATH =  $MKL_PATH.Replace('\', '\\')
+$DOUBLE_QUOTE_PATH = $MKL_PATH.Replace('\', '\\')
 $FAISS_CMAKE = "$DIST_PATH\share\faiss\faiss-targets.cmake"
 (Get-content $FAISS_CMAKE) | Foreach-Object {
     $_.Replace("$DOUBLE_QUOTE_PATH", '${_IMPORT_PREFIX}\\lib')
@@ -66,7 +67,7 @@ $FAISS_CMAKE = "$DIST_PATH\share\faiss\faiss-targets.cmake"
 
 # pack binary
 Push-Location $DIST_PATH
-7z a -m0=bcj -m1=zstd ..\$TARGET * | Out-Null
+7z a -mx=9 ..\$TARGET * | Out-Null
 Pop-Location
 
 Write-Output "::endgroup::"

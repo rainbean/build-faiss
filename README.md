@@ -1,24 +1,49 @@
 # build-faiss
 
-Build faiss library
+Builds and packages [FAISS](https://github.com/facebookresearch/faiss) as a self-contained binary artifact for Linux (x86_64 and ARM64) and Windows. Uses OpenBLAS for BLAS on all platforms. Artifacts are uploaded to S3 on tag push via GitHub Actions.
 
-## Getting start
+## Prerequisites
 
-```Shell
-$ ./scripts/build.sh && ./scripts/demo.sh && time ./build-demo/demo
+**Linux:** `libopenblas-openmp-dev` (the openmp variant avoids N² thread spawning when FAISS uses OpenMP alongside OpenBLAS — see [FAISS troubleshooting](https://github.com/facebookresearch/faiss/wiki/Troubleshooting#surprising-faiss-openmp-and-openblas-interaction))
 
-    [0.000 s] Generating 100000 vectors in 128D for training
-    [0.821 s] Training the index
-    Training level-1 quantizer
+```shell
+sudo apt-get install -y libopenblas-openmp-dev
+```
 
-    ...
+**Windows:** Visual Studio 2022 (MSBuild), vcpkg submodule (bootstrapped automatically by the build script — installs Intel MKL)
 
-    query  8:    1242   12357   73940   87457    7067
-        dis: 7.72795 10.6769 11.0571 11.1061  11.184
-    note that the nearest neighbor is not at distance 0 due to quantization errors
+## Build
 
-    ________________________________________________________
-    Executed in    4.31 secs    fish           external
-    usr time   17.31 secs  535.00 micros   17.31 secs
-    sys time    0.80 secs  164.00 micros    0.80 secs
-...
+```shell
+# Linux (x86_64 or ARM64)
+./scripts/build.sh [output.tar.zst]
+# Produces: faiss-linux-x86_64.tar.zst  (or faiss-linux-aarch64.tar.zst on ARM64)
+# Artifact unpacks to: dist/
+
+# Windows
+.\scripts\build.ps1 [output.7z]
+# Produces: faiss-win64.7z
+```
+
+## Test and benchmark
+
+Requires a completed build (`dist/` must exist).
+
+```shell
+# Build all tools (demo, test_cosine, bench_cosine)
+./scripts/demo.sh
+
+# Correctness test — IVF256,Flat inner-product, 672D, nprobe=32 (exits non-zero on failure)
+./build-demo/test_cosine
+
+# IVFPQ demo
+time ./build-demo/demo
+
+# Benchmark (optional --nprobe to tune)
+./build-demo/bench_cosine
+./build-demo/bench_cosine --nprobe 64
+```
+
+## CI
+
+Triggered on any tag push. Builds on Ubuntu 22.04 (x86_64), Ubuntu 22.04 ARM64, and Windows 2022. The correctness test (`test_cosine`) runs after each build and gates the S3 artifact upload.

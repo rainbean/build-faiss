@@ -23,7 +23,7 @@ jobs:
             command: build.sh
           - os: ubuntu-22.04-arm
             artifact: faiss-linux-arm64-${{ github.ref_name }}.tar.zst
-            command: build-arm64.sh
+            command: build.sh
           - os: windows-2022
             artifact: faiss-win64-${{ github.ref_name }}.7z
             command: build.ps1
@@ -49,15 +49,30 @@ jobs:
           curl -fsSL "https://cmake.org/files/v3.28/cmake-3.28.6-linux-$(uname -m).tar.gz" \
             | sudo tar -xz --strip-components=1 -C /usr/local
 
-      - name: Install ARM64 build dependencies
-        if: matrix.os == 'ubuntu-22.04-arm'
+      - name: Install Linux build dependencies
+        if: contains(matrix.os, 'ubuntu')
         run: |
           sudo apt-get update
-          sudo apt-get install -y libopenblas-dev
+          sudo apt-get install -y libopenblas-openmp-dev
 
       - name: Build artifact
         working-directory: ${{ github.workspace }}
         run: ${{ github.workspace }}/scripts/${{ matrix.command }} ${{ matrix.artifact }}
+
+      - name: Run correctness test (Linux)
+        if: contains(matrix.os, 'ubuntu')
+        working-directory: ${{ github.workspace }}
+        run: |
+          ./scripts/demo.sh
+          LD_LIBRARY_PATH="${{ github.workspace }}/dist/lib" ./build-demo/test_cosine
+
+      - name: Run correctness test (Windows)
+        if: contains(matrix.os, 'windows')
+        working-directory: ${{ github.workspace }}
+        run: |
+          .\scripts\demo.ps1
+          $env:PATH = "${{ github.workspace }}\dist\bin;$env:PATH"
+          .\build-demo\Release\test_cosine.exe
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v6
