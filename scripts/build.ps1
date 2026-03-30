@@ -10,16 +10,16 @@ if (!(Get-Command 7z -errorAction SilentlyContinue)) {
 }
 
 # install required 3rd party libraries
-if (!(Test-Path .\vcpkg\installed\x64-windows-static)) {
+# x64-windows (dynamic) includes LAPACK routines; x64-windows-static omits them
+if (!(Test-Path .\vcpkg\installed\x64-windows\lib)) {
     Write-Output "::group::Install vcpkg libraries ..."
     .\vcpkg\bootstrap-vcpkg.bat
-    .\vcpkg\vcpkg install openblas --triplet x64-windows-static --clean-after-build
+    .\vcpkg\vcpkg install openblas --triplet x64-windows --clean-after-build
     Write-Output "::endgroup::"
 }
 
-# OpenBLAS static lib (includes LAPACK routines); pass explicitly so CMake's
-# FindBLAS/FindLAPACK module mode resolves correctly under MSVC.
-$OPENBLAS_LIB = "$PWD\vcpkg\installed\x64-windows-static\lib\openblas.lib"
+# OpenBLAS import lib; pass explicitly so CMake's FindBLAS/FindLAPACK resolves correctly
+$OPENBLAS_LIB = "$PWD\vcpkg\installed\x64-windows\lib\openblas.lib"
 $DIST_PATH = "$PWD\dist"
 $VCPKG_TOOLCHAIN = "$PWD\vcpkg\scripts\buildsystems\vcpkg.cmake"
 
@@ -36,7 +36,7 @@ cmake -Bbuild `
     -Wno-dev `
     -DCMAKE_INSTALL_PREFIX="${DIST_PATH}" `
     -DCMAKE_TOOLCHAIN_FILE="${VCPKG_TOOLCHAIN}" `
-    -DVCPKG_TARGET_TRIPLET="x64-windows-static" `
+    -DVCPKG_TARGET_TRIPLET="x64-windows" `
     -DFAISS_ENABLE_PYTHON=OFF `
     -DFAISS_ENABLE_GPU=OFF `
     -DBUILD_TESTING=OFF `
@@ -47,6 +47,21 @@ cmake -Bbuild `
     faiss
 
 cmake --build build --config Release --target install
+
+Write-Output "::endgroup::"
+
+# bundle OpenBLAS DLL so the artifact is self-contained
+Write-Output "::group::Bundle OpenBLAS ..."
+$OPENBLAS_BIN = "$PWD\vcpkg\installed\x64-windows\bin"
+Copy-Item "$OPENBLAS_BIN\openblas.dll" "$DIST_PATH\bin\"
+
+# rewrite absolute vcpkg path in cmake targets to relative install prefix
+$FAISS_CMAKE = "$DIST_PATH\share\faiss\faiss-targets.cmake"
+$VCPKG_BIN_ESC = $OPENBLAS_BIN.Replace('\', '\\')
+(Get-Content $FAISS_CMAKE) | ForEach-Object {
+    $_ -replace [regex]::Escape($OPENBLAS_BIN), '${_IMPORT_PREFIX}/bin' `
+       -replace $VCPKG_BIN_ESC, '${_IMPORT_PREFIX}/bin'
+} | Set-Content $FAISS_CMAKE
 
 Write-Output "::endgroup::"
 
