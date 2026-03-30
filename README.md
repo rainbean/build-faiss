@@ -10,7 +10,7 @@ Builds and packages [FAISS](https://github.com/facebookresearch/faiss) as a self
 sudo apt-get install -y libopenblas-dev
 ```
 
-**Windows:** Visual Studio 2022 (MSBuild), vcpkg submodule (bootstrapped automatically by the build script)
+**Windows:** Visual Studio 2022 (MSBuild), vcpkg submodule (bootstrapped automatically by the build script — installs Intel MKL)
 
 ## Build
 
