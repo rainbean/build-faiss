@@ -4,10 +4,10 @@ Builds and packages [FAISS](https://github.com/facebookresearch/faiss) as a self
 
 ## Prerequisites
 
-**Linux:** `libopenblas-dev`
+**Linux:** `libopenblas-openmp-dev` (the openmp variant avoids N² thread spawning when FAISS uses OpenMP alongside OpenBLAS — see [FAISS troubleshooting](https://github.com/facebookresearch/faiss/wiki/Troubleshooting#surprising-faiss-openmp-and-openblas-interaction))
 
 ```shell
-sudo apt-get install -y libopenblas-dev
+sudo apt-get install -y libopenblas-openmp-dev
 ```
 
 **Windows:** Visual Studio 2022 (MSBuild), vcpkg submodule (bootstrapped automatically by the build script — installs Intel MKL)
