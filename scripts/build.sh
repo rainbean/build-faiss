@@ -3,6 +3,7 @@
 # abort on any error
 set -e
 
+ARCH=$(uname -m)
 DIST_PATH=dist
 
 # configure build and compile
@@ -21,7 +22,7 @@ cmake -Bbuild \
     -DBUILD_SHARED_LIBS=ON \
     faiss
 
-cmake --build build -j 4 -t install
+cmake --build build -j "$(nproc)" -t install
 echo "::endgroup::"
 
 # bundle OpenBLAS and its Fortran runtime so the artifact is self-contained
@@ -41,11 +42,14 @@ GFORTRAN_FILE=$(basename "$GFORTRAN_REAL")
 cp "$GFORTRAN_REAL" "$DIST_PATH/lib/"
 ln -sf "$GFORTRAN_FILE" "$DIST_PATH/lib/libgfortran.so.5"
 
-# libquadmath is a runtime dependency of libgfortran (quad-precision float support)
-QUADMATH_REAL=$(readlink -f "$(ldconfig -p | awk '/libquadmath\.so\.0 /{print $NF}' | head -1)")
-QUADMATH_FILE=$(basename "$QUADMATH_REAL")
-cp "$QUADMATH_REAL" "$DIST_PATH/lib/"
-ln -sf "$QUADMATH_FILE" "$DIST_PATH/lib/libquadmath.so.0"
+# libquadmath is a runtime dependency of libgfortran; x86_64 only (not present on ARM64)
+QUADMATH_PATH=$(ldconfig -p | awk '/libquadmath\.so\.0 /{print $NF}' | head -1)
+if [ -n "$QUADMATH_PATH" ]; then
+    QUADMATH_REAL=$(readlink -f "$QUADMATH_PATH")
+    QUADMATH_FILE=$(basename "$QUADMATH_REAL")
+    cp "$QUADMATH_REAL" "$DIST_PATH/lib/"
+    ln -sf "$QUADMATH_FILE" "$DIST_PATH/lib/libquadmath.so.0"
+fi
 
 # rewrite cmake targets to use relative install path
 sed -i "s@${OPENBLAS_DIR}@\${_IMPORT_PREFIX}/lib@g" "$DIST_PATH/share/faiss/faiss-targets.cmake"
@@ -53,7 +57,7 @@ echo "::endgroup::"
 
 # pack binary
 echo "::group::Pack artifacts ..."
-TARGET=${1:-'faiss-linux.tar.zst'}
-tar "-I zstd -3 -T4 --long=27" -cf $TARGET \
-    -C $DIST_PATH $(cd $DIST_PATH; echo *)
+TARGET=${1:-"faiss-linux-${ARCH}.tar.zst"}
+tar "-I zstd -3 -T4 --long=27" -cf "$TARGET" \
+    -C "$DIST_PATH" $(cd "$DIST_PATH"; echo *)
 echo "::endgroup::"
