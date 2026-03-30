@@ -3,18 +3,6 @@
 # abort on any error
 set -e
 
-# install required 3rd party libraries
-if [ ! -d "./vcpkg/installed/x64-linux/lib" ]
-then
-    echo "::group::Install vcpkg libraries ..."
-    ./vcpkg/bootstrap-vcpkg.sh
-    ./vcpkg/vcpkg install intel-mkl --triplet x64-linux --clean-after-build
-    echo "::endgroup::"
-fi
-
-# define MKL path
-MKL_PATH=$PWD/vcpkg/installed/x64-linux/lib/intel64
-MKL_LIBRARIES="-Wl,--start-group;${MKL_PATH}/libmkl_intel_lp64.a;${MKL_PATH}/libmkl_gnu_thread.a;${MKL_PATH}/libmkl_core.a;-Wl,--end-group"
 DIST_PATH=dist
 
 # configure build and compile
@@ -28,21 +16,33 @@ cmake -Bbuild \
     -DFAISS_ENABLE_PYTHON=OFF \
     -DFAISS_ENABLE_GPU=OFF \
     -DBUILD_TESTING=OFF \
-    -DBLA_VENDOR=Intel10_64lp \
-    -DMKL_LIBRARIES="${MKL_LIBRARIES}" \
+    -DBLA_VENDOR=OpenBLAS \
     -DBUILD_SHARED_LIBS=ON \
     faiss
 
 cmake --build build -j 4 -t install
 echo "::endgroup::"
 
-# copy artifacts and change config
-#rm $DIST_PATH/lib/libfaiss.so $DIST_PATH/lib/libfaiss_avx2.so
-#(cd $DIST_PATH/lib/; ln -s libfaiss_avx512.so libfaiss.so)
-#(cd $DIST_PATH/lib/; ln -s libfaiss_avx512.so libfaiss_avx2.so)
+# bundle OpenBLAS and its Fortran runtime so the artifact is self-contained
+echo "::group::Bundle OpenBLAS ..."
 
-# remap absolute path to relative dist path
-sed -i "s@$MKL_PATH@\${_IMPORT_PREFIX}/lib@g" $DIST_PATH/share/faiss/faiss-targets.cmake
+# Resolve the real file (not symlinks) and copy it, then recreate symlinks cleanly
+OPENBLAS_REAL=$(readlink -f "$(ldconfig -p | awk '/libopenblas\.so\.0 /{print $NF}' | head -1)")
+OPENBLAS_DIR=$(dirname "$OPENBLAS_REAL")
+OPENBLAS_FILE=$(basename "$OPENBLAS_REAL")
+cp "$OPENBLAS_REAL" "$DIST_PATH/lib/"
+ln -sf "$OPENBLAS_FILE" "$DIST_PATH/lib/libopenblas.so.0"
+ln -sf "$OPENBLAS_FILE" "$DIST_PATH/lib/libopenblas.so"
+
+# libgfortran is a runtime dependency of OpenBLAS (Fortran LAPACK routines)
+GFORTRAN_REAL=$(readlink -f "$(ldconfig -p | awk '/libgfortran\.so\.5 /{print $NF}' | head -1)")
+GFORTRAN_FILE=$(basename "$GFORTRAN_REAL")
+cp "$GFORTRAN_REAL" "$DIST_PATH/lib/"
+ln -sf "$GFORTRAN_FILE" "$DIST_PATH/lib/libgfortran.so.5"
+
+# rewrite cmake targets to use relative install path
+sed -i "s@${OPENBLAS_DIR}@\${_IMPORT_PREFIX}/lib@g" "$DIST_PATH/share/faiss/faiss-targets.cmake"
+echo "::endgroup::"
 
 # pack binary
 echo "::group::Pack artifacts ..."
