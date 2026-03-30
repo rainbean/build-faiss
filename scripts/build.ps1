@@ -1,6 +1,14 @@
 # param must be in the begin of PowerShell Script
 param ($TARGET = "faiss-win64.7z")
 
+# install 7-Zip if not available
+if (!(Get-Command 7z -errorAction SilentlyContinue)) {
+    Write-Output "::group::Install 7-Zip ..."
+    winget install --id 7zip.7zip -e --silent
+    $env:PATH += ";C:\Program Files\7-Zip"
+    Write-Output "::endgroup::"
+}
+
 # install required 3rd party libraries
 if (!(Test-Path .\vcpkg\installed\x64-windows-static)) {
     Write-Output "::group::Install vcpkg libraries ..."
@@ -9,6 +17,9 @@ if (!(Test-Path .\vcpkg\installed\x64-windows-static)) {
     Write-Output "::endgroup::"
 }
 
+# OpenBLAS static lib (includes LAPACK routines); pass explicitly so CMake's
+# FindBLAS/FindLAPACK module mode resolves correctly under MSVC.
+$OPENBLAS_LIB = "$PWD\vcpkg\installed\x64-windows-static\lib\openblas.lib"
 $DIST_PATH = "$PWD\dist"
 $VCPKG_TOOLCHAIN = "$PWD\vcpkg\scripts\buildsystems\vcpkg.cmake"
 
@@ -30,6 +41,8 @@ cmake -Bbuild `
     -DFAISS_ENABLE_GPU=OFF `
     -DBUILD_TESTING=OFF `
     -DBLA_VENDOR=OpenBLAS `
+    -DBLAS_LIBRARIES="${OPENBLAS_LIB}" `
+    -DLAPACK_LIBRARIES="${OPENBLAS_LIB}" `
     -DBUILD_SHARED_LIBS=ON `
     faiss
 
