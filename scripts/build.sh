@@ -41,6 +41,12 @@ GFORTRAN_FILE=$(basename "$GFORTRAN_REAL")
 cp "$GFORTRAN_REAL" "$DIST_PATH/lib/"
 ln -sf "$GFORTRAN_FILE" "$DIST_PATH/lib/libgfortran.so.5"
 
+# libquadmath is a runtime dependency of libgfortran (quad-precision float support)
+QUADMATH_REAL=$(readlink -f "$(ldconfig -p | awk '/libquadmath\.so\.0 /{print $NF}' | head -1)")
+QUADMATH_FILE=$(basename "$QUADMATH_REAL")
+cp "$QUADMATH_REAL" "$DIST_PATH/lib/"
+ln -sf "$QUADMATH_FILE" "$DIST_PATH/lib/libquadmath.so.0"
+
 # rewrite cmake targets to use relative install path
 sed -i "s@${OPENBLAS_DIR}@\${_IMPORT_PREFIX}/lib@g" "$DIST_PATH/share/faiss/faiss-targets.cmake"
 echo "::endgroup::"
