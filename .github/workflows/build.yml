@@ -43,12 +43,6 @@ jobs:
           sudo rm -rf /usr/share/dotnet
           sudo rm -rf "$AGENT_TOOLSDIRECTORY"
 
-      - name: Install CMake (requires >=3.23.1)
-        if: contains(matrix.os, 'ubuntu')
-        run: |
-          curl -fsSL "https://github.com/Kitware/CMake/releases/download/v3.31.11/cmake-3.31.11-linux-$(uname -m).tar.gz" \
-            | sudo tar -xz --strip-components=1 -C /usr/local
-
       - name: Install Linux build dependencies
         if: contains(matrix.os, 'ubuntu')
         run: |
