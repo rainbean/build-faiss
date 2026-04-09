@@ -55,6 +55,9 @@ fi
 sed -i "s@${OPENBLAS_DIR}@\${_IMPORT_PREFIX}/lib@g" "$DIST_PATH/share/faiss/faiss-targets.cmake"
 echo "::endgroup::"
 
+# copy license files into dist so they are included in the archive
+cp LICENSE THIRD-PARTY-NOTICES "$DIST_PATH/"
+
 # pack binary
 echo "::group::Pack artifacts ..."
 TARGET=${1:-"faiss-linux-${ARCH}.tar.zst"}

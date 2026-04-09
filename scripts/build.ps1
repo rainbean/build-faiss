@@ -65,6 +65,9 @@ $FAISS_CMAKE = "$DIST_PATH\share\faiss\faiss-targets.cmake"
     $_.Replace("$DOUBLE_QUOTE_PATH", '${_IMPORT_PREFIX}\\lib')
 } | Set-Content $FAISS_CMAKE
 
+# copy license files into dist so they are included in the archive
+cp LICENSE, THIRD-PARTY-NOTICES $DIST_PATH
+
 # pack binary
 Push-Location $DIST_PATH
 7z a -mx=9 ..\$TARGET * | Out-Null
