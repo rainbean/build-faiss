@@ -1,0 +1,33 @@
+This distribution includes the following third-party software components.
+
+--------------------------------------------------------------------------------
+FAISS
+--------------------------------------------------------------------------------
+Copyright (c) Facebook, Inc. and its affiliates.
+SPDX-License-Identifier: MIT
+https://github.com/facebookresearch/faiss
+
+--------------------------------------------------------------------------------
+OpenBLAS (Linux distribution only)
+--------------------------------------------------------------------------------
+Copyright (c) 2011–2014, The OpenBLAS Project
+SPDX-License-Identifier: BSD-3-Clause
+https://github.com/OpenMathLib/OpenBLAS
+
+--------------------------------------------------------------------------------
+GCC Runtime Libraries: libgfortran, libquadmath (Linux distribution only)
+--------------------------------------------------------------------------------
+Copyright (C) Free Software Foundation, Inc.
+SPDX-License-Identifier: GPL-3.0-only WITH GCC-exception-3.1
+https://gcc.gnu.org/onlinedocs/gfortran/
+https://gcc.gnu.org/onlinedocs/libquadmath/
+
+These libraries are distributed under the GNU General Public License v3 with the
+GCC Runtime Library Exception, which permits their use with non-GPL software.
+
+--------------------------------------------------------------------------------
+Intel oneAPI Math Kernel Library (MKL) — Windows build dependency
+--------------------------------------------------------------------------------
+Intel MKL is NOT bundled in this distribution. It is downloaded at build time
+by vcpkg and is subject to the Intel Simplified Software License.
+https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl.html
