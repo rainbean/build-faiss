@@ -8,14 +8,17 @@ SPDX-License-Identifier: MIT
 https://github.com/facebookresearch/faiss
 
 --------------------------------------------------------------------------------
-OpenBLAS (Linux distribution only)
+OpenBLAS
 --------------------------------------------------------------------------------
 Copyright (c) 2011–2014, The OpenBLAS Project
 SPDX-License-Identifier: BSD-3-Clause
 https://github.com/OpenMathLib/OpenBLAS
 
+Bundled on all platforms: as libopenblas.so on Linux, and as libopenblas.dll on
+Windows (the upstream OpenBLAS Windows release build).
+
 --------------------------------------------------------------------------------
-GCC Runtime Libraries: libgfortran, libquadmath (Linux distribution only)
+GCC Runtime Libraries: libgfortran, libquadmath, libwinpthread
 --------------------------------------------------------------------------------
 Copyright (C) Free Software Foundation, Inc.
 SPDX-License-Identifier: GPL-3.0-only WITH GCC-exception-3.1
@@ -25,9 +28,8 @@ https://gcc.gnu.org/onlinedocs/libquadmath/
 These libraries are distributed under the GNU General Public License v3 with the
 GCC Runtime Library Exception, which permits their use with non-GPL software.
 
---------------------------------------------------------------------------------
-Intel oneAPI Math Kernel Library (MKL) — Windows build dependency
---------------------------------------------------------------------------------
-Intel MKL is NOT bundled in this distribution. It is downloaded at build time
-by vcpkg and is subject to the Intel Simplified Software License.
-https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl.html
+On Linux they are bundled as separate shared objects (libgfortran.so.5 and,
+on x86_64, libquadmath.so.0). On Windows the upstream OpenBLAS release is built
+with the mingw-w64 toolchain and links these statically into libopenblas.dll,
+together with libwinpthread from mingw-w64 (MIT licensed,
+https://www.mingw-w64.org/).

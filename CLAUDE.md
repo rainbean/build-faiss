@@ -4,11 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-This repository builds and packages [FAISS](https://github.com/facebookresearch/faiss) (Facebook AI Similarity Search) as distributable binaries for Linux and Windows. The FAISS source and vcpkg package manager are git submodules. Builds link against Intel MKL (via vcpkg) for optimized BLAS performance.
+This repository builds and packages [FAISS](https://github.com/facebookresearch/faiss) (Facebook AI Similarity Search) as distributable binaries for Linux (x86_64, arm64) and Windows (x64). The FAISS source is a git submodule. All platforms link against OpenBLAS for BLAS and LAPACK.
 
 ## Setup
 
-Fresh clone requires submodules:
+Fresh clone requires the `faiss` submodule:
 ```bash
 git clone --recurse-submodules <repo>
 # or after cloning: git submodule update --init --recursive
@@ -19,58 +19,60 @@ git clone --recurse-submodules <repo>
 ### Build (Linux)
 ```bash
 ./scripts/build.sh [optional_output_filename]
-# Produces: faiss-linux.tar.zst (or specified filename)
+# Produces: faiss-linux-$(uname -m).tar.zst (or specified filename)
 # Output artifact unpacks to: dist/
+# Requires: libopenblas-openmp-dev (apt)
 ```
-
-vcpkg installs intel-mkl only on first run (skipped if `vcpkg/installed/x64-linux/lib` exists). Re-running the build script after the first time skips the vcpkg step.
 
 ### Build (Windows)
 ```powershell
 .\scripts\build.ps1 [optional_output_filename]
 # Produces: faiss-win64.7z
-# Requires: Chocolatey (for 7zip-zstd), MSBuild / Visual Studio 2022
+# Requires: winget (for 7zip-zstd), MSBuild / Visual Studio 2022
 ```
 
-The Windows script patches `vcpkg/ports/intel-mkl/portfile.cmake` in-place before first install. This modifies a tracked file in the `vcpkg` submodule. Three edits:
-- `ilp64` → `lp64` (FAISS passes 32-bit ints to BLAS)
-- `sequential` → `intel_thread` (threaded MKL under the static-CRT triplet)
-- install the Intel OpenMP runtime `bin/` and drop `bin/*.dll` from the static-linkage purge, so `libiomp5md.dll` is available to ship
+On first run the script downloads the upstream OpenBLAS Windows release into
+`build-deps/` and extracts it; later runs reuse it.
 
 ### Build and Run Demo
 ```bash
-# dist/ must exist (run build.sh first)
-./scripts/demo.sh && time ./build-demo/demo
+# dist/ must exist (run the build script first)
+./scripts/demo.sh && time ./build-demo/demo          # Linux
+.\scripts\demo.ps1                                   # Windows
 ```
 
-The demo compiles `demo/demo_ivfpq_indexing.cpp` against the built `dist/` artifacts and runs an IVFPQ indexing benchmark on random 128D vectors. It also requires OpenMP at link time.
+`demo.sh`/`demo.ps1` build three executables against `dist/`:
+- `demo` — IVFPQ indexing benchmark on random 128D vectors
+- `test_cosine` — correctness check, gated in CI
+- `bench_cosine` — offline speed comparison; reports train/add time and search QPS
 
 ## Architecture
 
 ### Submodules
 - `faiss/` — Facebook Research FAISS source (do not edit)
-- `vcpkg/` — Microsoft vcpkg C++ package manager (do not edit)
 
 ### Build Flow
-1. **vcpkg** bootstraps and installs `intel-mkl` (`x64-linux` or `x64-windows-static` triplet)
+1. **OpenBLAS** is acquired: from the distro package on Linux, or downloaded from the upstream release into `build-deps/` on Windows
 2. **CMake** configures the `faiss/` submodule with:
-   - `BLA_VENDOR=Intel10_64lp` (static MKL linking)
+   - `BLA_VENDOR=OpenBLAS`
    - Python and GPU support disabled
    - Shared library output
 3. Install target copies artifacts to `dist/`
-4. Post-processing: absolute MKL paths in `dist/share/faiss/faiss-targets.cmake` are rewritten to relative `${_IMPORT_PREFIX}/lib` paths (so the tarball is relocatable)
-5. Archive packed with zstd compression (Linux) or 7z (Windows)
+4. The OpenBLAS runtime is copied next to `faiss.dll` / `libfaiss.so` so the artifact is self-contained
+5. Post-processing: absolute BLAS paths in `dist/share/faiss/faiss-targets.cmake` are rewritten to relative `${_IMPORT_PREFIX}/lib` paths (so the archive is relocatable)
+6. Archive packed with zstd compression (Linux) or 7z (Windows)
 
 ### Demo App
-`demo/CMakeLists.txt` finds the FAISS package from `../dist` and links against it. The demo (`demo_ivfpq_indexing.cpp`) validates the build by training an IVFPQ index, inserting vectors, and querying nearest neighbors.
+`demo/CMakeLists.txt` finds the FAISS package from `../dist` and links against it.
 
 ### CI/CD
-`.github/workflows/build.yml` triggers on any git tag push, builds on Ubuntu 22.04 and Windows 2022, and uploads artifacts to AWS S3 (ap-northeast-1). Artifact filenames include the tag name: `faiss-linux-{tag}.tar.zst` and `faiss-win64-{tag}.7z`. Uses OIDC for AWS auth (requires `id-token: write` permission).
+`.github/workflows/build.yml` triggers on any git tag push, builds on Ubuntu 22.04 (x86_64 and arm64) and Windows 2022, runs `test_cosine`, and uploads artifacts to AWS S3 (ap-northeast-1). Artifact filenames include the tag name. Uses OIDC for AWS auth (requires `id-token: write` permission).
 
 ## Important Notes
 
 - AVX512 is **disabled** by default (for generic CPU compatibility); see commit `ef7c228`
-- The Windows build patches the intel-mkl vcpkg port to use `lp64` and `intel_thread` instead of `ilp64`/`sequential`, and to install `libiomp5md.dll`, which the port otherwise omits for static linkage
-- MKL 2025.2 installs its import libraries flat in `vcpkg/installed/x64-windows-static/lib`, not `lib/intel64` as MKL 2023 did; `build.ps1` asserts the expected files exist before configuring CMake
-- Only `vcpkg/` is excluded from Claude's context via `.claudeignore` — `faiss/` is not excluded (but is a read-only submodule)
-- `dist/` and `build/` directories are generated artifacts — do not commit them
+- The vcpkg `openblas` port is **not** usable here: it is built with `BUILD_WITHOUT_LAPACK=ON` / `NOFORTRAN=ON`, while FAISS requires LAPACK (`ssyev_`, `dsyev_`, `sgesvd_`, `dgesvd_`, `sgeqrf_`, `sorgqr_`). Its `dynamic-arch` feature is also unsupported on MSVC. The upstream OpenBLAS Windows release is used instead — it ships full LAPACK, an MSVC import library, and DYNAMIC_ARCH runtime CPU dispatch
+- Use the `-x64` OpenBLAS release asset, not `-x64-64`: the latter is ILP64 (64-bit integer interface), which FAISS cannot use
+- The Windows `libopenblas.dll` is a mingw-w64 build that statically links libgfortran and libwinpthread; see `THIRD-PARTY-NOTICES`
+- BLAS choice affects index build (`train`/`add`) but not IVF search, which never calls BLAS
+- `dist/`, `build/`, `build-demo/` and `build-deps/` are generated — do not commit them
