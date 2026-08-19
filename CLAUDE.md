@@ -32,7 +32,10 @@ vcpkg installs intel-mkl only on first run (skipped if `vcpkg/installed/x64-linu
 # Requires: Chocolatey (for 7zip-zstd), MSBuild / Visual Studio 2022
 ```
 
-The Windows script patches `vcpkg/ports/intel-mkl/portfile.cmake` in-place before first install (replaces `ilp64`→`lp64`, `sequential`→`intel_thread`). This modifies a tracked file in the `vcpkg` submodule.
+The Windows script patches `vcpkg/ports/intel-mkl/portfile.cmake` in-place before first install. This modifies a tracked file in the `vcpkg` submodule. Three edits:
+- `ilp64` → `lp64` (FAISS passes 32-bit ints to BLAS)
+- `sequential` → `intel_thread` (threaded MKL under the static-CRT triplet)
+- install the Intel OpenMP runtime `bin/` and drop `bin/*.dll` from the static-linkage purge, so `libiomp5md.dll` is available to ship
 
 ### Build and Run Demo
 ```bash
@@ -67,6 +70,7 @@ The demo compiles `demo/demo_ivfpq_indexing.cpp` against the built `dist/` artif
 ## Important Notes
 
 - AVX512 is **disabled** by default (for generic CPU compatibility); see commit `ef7c228`
-- The Windows build patches the intel-mkl vcpkg port to use `lp64` and `intel_thread` instead of `ilp64`/`sequential`
+- The Windows build patches the intel-mkl vcpkg port to use `lp64` and `intel_thread` instead of `ilp64`/`sequential`, and to install `libiomp5md.dll`, which the port otherwise omits for static linkage
+- MKL 2025.2 installs its import libraries flat in `vcpkg/installed/x64-windows-static/lib`, not `lib/intel64` as MKL 2023 did; `build.ps1` asserts the expected files exist before configuring CMake
 - Only `vcpkg/` is excluded from Claude's context via `.claudeignore` — `faiss/` is not excluded (but is a read-only submodule)
 - `dist/` and `build/` directories are generated artifacts — do not commit them
