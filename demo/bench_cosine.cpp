@@ -58,8 +58,19 @@ int main(int argc, char** argv) {
 
     faiss::IndexFlatIP quantizer(d);
     faiss::IndexIVFFlat index(&quantizer, d, nlist, faiss::METRIC_INNER_PRODUCT);
+
+    // train() (k-means) and add() (quantizer assignment) are the BLAS-heavy
+    // phases; IVF list scanning during search does not call BLAS at all, so
+    // these are the numbers that discriminate between BLAS backends.
+    auto t_train0 = std::chrono::high_resolution_clock::now();
     index.train(nb, db.data());
+    auto t_train1 = std::chrono::high_resolution_clock::now();
     index.add(nb, db.data());
+    auto t_add1 = std::chrono::high_resolution_clock::now();
+    printf("train: %.0f ms   add: %.0f ms\n",
+           std::chrono::duration<double, std::milli>(t_train1 - t_train0).count(),
+           std::chrono::duration<double, std::milli>(t_add1 - t_train1).count());
+
     index.nprobe = nprobe;
 
     printf("Benchmarking: %d rounds x %d queries ...\n", rounds, nq_batch);

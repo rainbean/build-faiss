@@ -24,3 +24,7 @@ venv.bak/
 data*/
 checkpoint/
 .DS_Store
+
+# windows BLAS dependencies fetched by build.ps1
+build-deps/
+*.7z
