@@ -76,3 +76,17 @@ On first run the script downloads the upstream OpenBLAS Windows release into
 - The Windows `libopenblas.dll` is a mingw-w64 build that statically links libgfortran and libwinpthread; see `THIRD-PARTY-NOTICES`
 - BLAS choice affects index build (`train`/`add`) but not IVF search, which never calls BLAS
 - `dist/`, `build/`, `build-demo/` and `build-deps/` are generated — do not commit them
+
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked in GitHub Issues on `rainbean/build-faiss` via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five default triage labels (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one `GLOSSARY.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
