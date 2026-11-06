@@ -1,35 +1,86 @@
-This distribution includes the following third-party software components.
+This archive contains FAISS and the libraries it needs at run time, packaged by
+https://github.com/rainbean/build-faiss. Every component is third-party
+software; each is listed below with its copyright holders and license.
 
 --------------------------------------------------------------------------------
-FAISS
+FAISS 1.15.1 (Linux: libfaiss.so, Windows: faiss.dll; headers and CMake files)
 --------------------------------------------------------------------------------
 Copyright (c) Facebook, Inc. and its affiliates.
 SPDX-License-Identifier: MIT
 https://github.com/facebookresearch/faiss
 
 --------------------------------------------------------------------------------
-OpenBLAS
+OpenBLAS (Linux: libopenblas.so 0.3.20 from Ubuntu 22.04;
+          Windows: libopenblas.dll 0.3.34, upstream release build)
 --------------------------------------------------------------------------------
-Copyright (c) 2011–2014, The OpenBLAS Project
+Copyright (c) 2011-2014, The OpenBLAS Project
 SPDX-License-Identifier: BSD-3-Clause
 https://github.com/OpenMathLib/OpenBLAS
 
-Bundled on all platforms: as libopenblas.so on Linux, and as libopenblas.dll on
-Windows (the upstream OpenBLAS Windows release build).
+--------------------------------------------------------------------------------
+GotoBLAS2 (part of OpenBLAS)
+--------------------------------------------------------------------------------
+Copyright (c) 2009-2010 The University of Texas at Austin
+SPDX-License-Identifier: BSD-2-Clause-Views
+https://github.com/OpenMathLib/OpenBLAS
 
 --------------------------------------------------------------------------------
-GCC Runtime Libraries: libgfortran, libquadmath, libwinpthread
+Reference LAPACK (part of OpenBLAS)
+--------------------------------------------------------------------------------
+Copyright (c) 1992-2023 The University of Tennessee and The University of
+                        Tennessee Research Foundation. All rights reserved.
+Copyright (c) 2000-2023 The University of California Berkeley.
+                        All rights reserved.
+Copyright (c) 2006-2023 The University of Colorado Denver.
+                        All rights reserved.
+SPDX-License-Identifier: BSD-3-Clause-Open-MPI
+https://github.com/Reference-LAPACK/lapack
+
+--------------------------------------------------------------------------------
+GCC Runtime Libraries: libgfortran, libgcc
 --------------------------------------------------------------------------------
 Copyright (C) Free Software Foundation, Inc.
-SPDX-License-Identifier: GPL-3.0-only WITH GCC-exception-3.1
-https://gcc.gnu.org/onlinedocs/gfortran/
-https://gcc.gnu.org/onlinedocs/libquadmath/
+SPDX-License-Identifier: GPL-3.0-or-later WITH GCC-exception-3.1
+https://gcc.gnu.org/
 
 These libraries are distributed under the GNU General Public License v3 with the
 GCC Runtime Library Exception, which permits their use with non-GPL software.
 
-On Linux they are bundled as separate shared objects (libgfortran.so.5 and,
-on x86_64, libquadmath.so.0). On Windows the upstream OpenBLAS release is built
-with the mingw-w64 toolchain and links these statically into libopenblas.dll,
-together with libwinpthread from mingw-w64 (MIT licensed,
-https://www.mingw-w64.org/).
+Linux: libgfortran.so.5 (GCC 12, Ubuntu 22.04). Windows: linked statically into
+libopenblas.dll (GCC 9.3.0, mingw-w64).
+
+--------------------------------------------------------------------------------
+libquadmath (GCC)
+--------------------------------------------------------------------------------
+Copyright (C) 2010 Free Software Foundation, Inc.
+Copyright (C) 1984-2001 Stephen L. Moshier
+SPDX-License-Identifier: LGPL-2.0-or-later AND LGPL-2.1-or-later
+https://gcc.gnu.org/onlinedocs/libquadmath/
+
+Linux x86_64: libquadmath.so.0 (GCC 12, Ubuntu 22.04), replaceable on its own.
+Windows: linked statically into libopenblas.dll (GCC 9.3.0), which faiss.dll
+loads dynamically, so libopenblas.dll can be rebuilt from the OpenBLAS and GCC
+sources linked above and swapped in.
+
+--------------------------------------------------------------------------------
+mingw-w64 runtime v8.0.0 (Windows only, linked statically into libopenblas.dll)
+--------------------------------------------------------------------------------
+Copyright (c) 2009, 2010, 2011, 2012, 2013 by the mingw-w64 project
+Copyright (c) 2011 mingw-w64 project (winpthreads)
+Copyright (C) 2010 Lockless Inc. (winpthreads)
+Copyright (C) 1997, 1998, 1999, 2000, 2001 by Lucent Technologies (gdtoa)
+Copyright (C) 2004, 2005 by David M. Gay (gdtoa)
+Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved. (math)
+SPDX-License-Identifier: ZPL-2.1 AND MIT AND BSD-3-Clause
+https://www.mingw-w64.org/
+
+The gdtoa and math parts carry their own permissive notices; full texts are in
+COPYING.MinGW-w64-runtime.txt in the mingw-w64 source tree.
+
+--------------------------------------------------------------------------------
+Not bundled — system runtimes
+--------------------------------------------------------------------------------
+These are NOT included in this archive and must be present on the target
+system, subject to their own license terms: on Linux, the GCC runtimes
+libgomp.so.1, libstdc++.so.6 and libgcc_s.so.1; on Windows, the Microsoft
+Visual C++ 2015-2022 Redistributable (MSVCP140, VCRUNTIME140, VCOMP140).
