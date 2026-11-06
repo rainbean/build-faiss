@@ -57,8 +57,9 @@ fi
 sed -i "s@${OPENBLAS_DIR}@\${_IMPORT_PREFIX}/lib@g" "$DIST_PATH/share/faiss/faiss-targets.cmake"
 echo "::endgroup::"
 
-# copy license files into dist so they are included in the archive
-cp LICENSE THIRD-PARTY-NOTICES "$DIST_PATH/"
+# ship the notices under a package-specific name, so unpacking several
+# archives into one tree (e.g. in mosaique-ir) never overwrites another's
+cp THIRD-PARTY-NOTICES.faiss "$DIST_PATH/"
 
 # pack binary
 echo "::group::Pack artifacts ..."

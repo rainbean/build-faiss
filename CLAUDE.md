@@ -60,7 +60,8 @@ On first run the script downloads the upstream OpenBLAS Windows release into
 3. Install target copies artifacts to `dist/`
 4. The OpenBLAS runtime is copied next to `faiss.dll` / `libfaiss.so` so the artifact is self-contained
 5. Post-processing: absolute BLAS paths in `dist/share/faiss/faiss-targets.cmake` are rewritten to relative `${_IMPORT_PREFIX}/lib` paths (so the archive is relocatable)
-6. Archive packed with zstd compression (Linux) or 7z (Windows)
+6. `THIRD-PARTY-NOTICES.faiss` is copied into `dist/`; the repo `LICENSE` covers only the build scripts and is not shipped. The package-specific name keeps it from overwriting other packages' notices when consumers unpack several archives into one tree
+7. Archive packed with zstd compression (Linux) or 7z (Windows)
 
 ### Demo App
 `demo/CMakeLists.txt` finds the FAISS package from `../dist` and links against it.
@@ -73,7 +74,7 @@ On first run the script downloads the upstream OpenBLAS Windows release into
 - AVX512 is **disabled** by default (for generic CPU compatibility); see commit `ef7c228`
 - The vcpkg `openblas` port is **not** usable here: it is built with `BUILD_WITHOUT_LAPACK=ON` / `NOFORTRAN=ON`, while FAISS requires LAPACK (`ssyev_`, `dsyev_`, `sgesvd_`, `dgesvd_`, `sgeqrf_`, `sorgqr_`). Its `dynamic-arch` feature is also unsupported on MSVC. The upstream OpenBLAS Windows release is used instead — it ships full LAPACK, an MSVC import library, and DYNAMIC_ARCH runtime CPU dispatch
 - Use the `-x64` OpenBLAS release asset, not `-x64-64`: the latter is ILP64 (64-bit integer interface), which FAISS cannot use
-- The Windows `libopenblas.dll` is a mingw-w64 build that statically links libgfortran and libwinpthread; see `THIRD-PARTY-NOTICES`
+- The Windows `libopenblas.dll` is a mingw-w64 build that statically links libgfortran, libquadmath and the mingw-w64 runtime; see `THIRD-PARTY-NOTICES.faiss`
 - BLAS choice affects index build (`train`/`add`) but not IVF search, which never calls BLAS
 - `dist/`, `build/`, `build-demo/` and `build-deps/` are generated — do not commit them
 
