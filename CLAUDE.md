@@ -66,7 +66,7 @@ On first run the script downloads the upstream OpenBLAS Windows release into
 `demo/CMakeLists.txt` finds the FAISS package from `../dist` and links against it.
 
 ### CI/CD
-`.github/workflows/build.yml` triggers on any git tag push, builds on Ubuntu 22.04 (x86_64 and arm64) and Windows 2022, runs `test_cosine`, and uploads artifacts to AWS S3 (ap-northeast-1). Artifact filenames include the tag name. Uses OIDC for AWS auth (requires `id-token: write` permission).
+`.github/workflows/build.yml` triggers on any git tag push, builds on Ubuntu 22.04 (x86_64 and arm64) and Windows 2022, runs `test_cosine`, and uploads artifacts to AWS S3 (ap-northeast-1). Artifact filenames include the tag name. A `checksums` job then joins per-platform hashes into `SHA256SUMS-<tag>`, signs it with cosign keyless, verifies it against the identity in `docs/verify.md`, and uploads it with its `.bundle` to the same S3 prefix. Uses OIDC for both AWS auth and cosign (requires `id-token: write` permission).
 
 ## Important Notes
 

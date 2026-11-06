@@ -68,6 +68,22 @@ jobs:
           $env:PATH = "${{ github.workspace }}\dist\bin;$env:PATH"
           .\build-demo\Release\test_cosine.exe
 
+      # One sha256sum line per platform; the checksums job joins and signs them.
+      # Hash from stdin so Windows' sha256sum can't add a "*" binary marker.
+      - name: Hash artifact
+        shell: bash
+        working-directory: ${{ github.workspace }}
+        run: |
+          printf '%s  %s\n' "$(sha256sum < '${{ matrix.artifact }}' | cut -d' ' -f1)" \
+            '${{ matrix.artifact }}' > '${{ matrix.artifact }}.sha256'
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: sha256-${{ matrix.os }}
+          path: ${{ matrix.artifact }}.sha256
+          retention-days: 1
+          overwrite: true # "Re-run failed jobs" reuses the name
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v6
         with:
@@ -78,3 +94,44 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: |
           aws s3 cp ${{ matrix.artifact }} ${{ secrets.aws_s3_bucket }}
+
+  checksums:
+    needs: build
+    runs-on: ubuntu-22.04
+
+    env:
+      SUMS: SHA256SUMS-${{ github.ref_name }}
+
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: sha256-*
+          merge-multiple: true
+
+      - name: Write SHA256SUMS
+        run: cat *.sha256 | sort -k2 > "$SUMS" && cat "$SUMS"
+
+      - uses: sigstore/cosign-installer@v4
+
+      # Keyless: the certificate binds the signature to this workflow at this
+      # tag, through GitHub OIDC. Verify straight away with the identity
+      # docs/verify.md tells users to check, so a mismatch fails the release,
+      # not them.
+      - name: Sign SHA256SUMS
+        run: |
+          cosign sign-blob --yes --bundle "$SUMS.bundle" "$SUMS"
+          cosign verify-blob --bundle "$SUMS.bundle" \
+            --certificate-identity "https://github.com/$GITHUB_WORKFLOW_REF" \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+            "$SUMS"
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.aws_iam_role }}
+          aws-region: ap-northeast-1
+
+      - name: Upload SHA256SUMS
+        run: |
+          aws s3 cp "$SUMS" ${{ secrets.aws_s3_bucket }}
+          aws s3 cp "$SUMS.bundle" ${{ secrets.aws_s3_bucket }}
