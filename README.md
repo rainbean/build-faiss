@@ -47,3 +47,5 @@ time ./build-demo/demo
 ## CI
 
 Triggered on any tag push. Builds on Ubuntu 22.04 (x86_64), Ubuntu 22.04 ARM64, and Windows 2022. The correctness test (`test_cosine`) runs after each build and gates the S3 artifact upload.
+
+A final job writes `SHA256SUMS-<tag>` over all three archives, signs it with cosign keyless (GitHub OIDC), and uploads it and its `.bundle` next to them. See [docs/verify.md](docs/verify.md) to check a download.
