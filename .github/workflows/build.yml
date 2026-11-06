@@ -15,6 +15,9 @@ jobs:
   build:
     runs-on: ${{ matrix.os }}
 
+    env:
+      AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+
     strategy:
       matrix:
         include:
@@ -87,19 +90,20 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v6
         with:
-          role-to-assume: ${{ secrets.aws_iam_role }}
+          role-to-assume: ${{ secrets.AWS_UPLOAD_ROLE }}
           aws-region: ap-northeast-1
 
       - name: Upload artifact
         working-directory: ${{ github.workspace }}
         run: |
-          aws s3 cp ${{ matrix.artifact }} ${{ secrets.aws_s3_bucket }}
+          aws s3 cp ${{ matrix.artifact }} s3://${{ env.AWS_S3_BUCKET }}/faiss/
 
   checksums:
     needs: build
     runs-on: ubuntu-22.04
 
     env:
+      AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
       SUMS: SHA256SUMS-${{ github.ref_name }}
 
     steps:
@@ -128,10 +132,10 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v6
         with:
-          role-to-assume: ${{ secrets.aws_iam_role }}
+          role-to-assume: ${{ secrets.AWS_UPLOAD_ROLE }}
           aws-region: ap-northeast-1
 
       - name: Upload SHA256SUMS
         run: |
-          aws s3 cp "$SUMS" ${{ secrets.aws_s3_bucket }}
-          aws s3 cp "$SUMS.bundle" ${{ secrets.aws_s3_bucket }}
+          aws s3 cp "$SUMS" "s3://${{ env.AWS_S3_BUCKET }}/faiss/"
+          aws s3 cp "$SUMS.bundle" "s3://${{ env.AWS_S3_BUCKET }}/faiss/"
