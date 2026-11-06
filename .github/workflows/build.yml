@@ -111,7 +111,7 @@ jobs:
       - name: Write SHA256SUMS
         run: cat *.sha256 | sort -k2 > "$SUMS" && cat "$SUMS"
 
-      - uses: sigstore/cosign-installer@v4
+      - uses: sigstore/cosign-installer@v4.1.3 # no floating v4 tag upstream
 
       # Keyless: the certificate binds the signature to this workflow at this
       # tag, through GitHub OIDC. Verify straight away with the identity
